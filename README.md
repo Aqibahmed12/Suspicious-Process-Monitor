@@ -2,7 +2,9 @@
 
 A **real-time cybersecurity dashboard** built with Python Flask that monitors running system processes, flags suspicious activity based on CPU/memory thresholds and unknown executable detection, and presents findings through an interactive web interface.
 
-![Dashboard Screenshot](docs/screenshot-placeholder.png)
+## 📸 Dashboard Screenshot
+
+![Suspicious Process Monitor Dashboard](docs/screenshot.png)
 
 ---
 
