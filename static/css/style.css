@@ -1,0 +1,42 @@
+/*
+ * style.css — Custom Styles for Suspicious Process Monitor
+ * =========================================================
+ * Most styling is handled by Tailwind CSS via CDN.
+ * This file provides additional custom overrides and utility classes
+ * that are not easily expressed as Tailwind utility classes.
+ */
+
+/* ── Base ─────────────────────────────────────────────────────────────────── */
+body {
+    background-color: #0f172a;
+    color: #e2e8f0;
+}
+
+/* ── Selection highlight ──────────────────────────────────────────────────── */
+::selection {
+    background-color: rgba(56, 189, 248, 0.3);
+    color: #ffffff;
+}
+
+/* ── Focus ring utility ───────────────────────────────────────────────────── */
+.focus-ring:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.5);
+}
+
+/* ── Table row transition ─────────────────────────────────────────────────── */
+#process-tbody tr,
+#flagged-tbody tr {
+    transition: background-color 0.15s ease;
+}
+
+/* ── Responsive adjustments ───────────────────────────────────────────────── */
+@media (max-width: 768px) {
+    #controls-bar .flex {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    #controls-bar .w-48 {
+        width: 100%;
+    }
+}
