@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login | Suspicious Process Monitor</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Inter', 'system-ui', 'sans-serif'] },
+                },
+            },
+        };
+    </script>
+    <style>
+        body { background-color: #0f172a; color: #e2e8f0; font-family: 'Inter', system-ui, sans-serif; }
+        .glass-card { background: rgba(30,41,59,0.7); backdrop-filter: blur(12px); border: 1px solid #334155; box-shadow: 0 4px 30px rgba(56,189,248,0.08); }
+        .config-input { background: rgba(15,23,42,0.6); border: 1px solid #475569; color: #e2e8f0; border-radius: 0.5rem; padding: 0.75rem 1rem; width: 100%; transition: border-color 0.15s; }
+        .config-input:focus { outline: none; border-color: #38bdf8; box-shadow: 0 0 0 2px rgba(56,189,248,0.2); }
+        .config-input::placeholder { color: #64748b; }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-4">
+
+    <div class="glass-card w-full max-w-md rounded-2xl p-8 text-center relative overflow-hidden">
+        <div class="w-16 h-16 mx-auto rounded-2xl bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center shadow-lg shadow-cyan-500/30 mb-6">
+            <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+            </svg>
+        </div>
+        
+        <h1 class="text-2xl font-bold text-white mb-2">Secure Login</h1>
+        <p class="text-sm text-slate-400 mb-8" id="status-text">Enter your email to receive a one-time password.</p>
+
+        <!-- Step 1: Email Form -->
+        <div id="step-email">
+            <div class="text-left mb-4">
+                <label class="block text-xs text-slate-400 mb-1.5 font-medium uppercase tracking-wider">Email Address</label>
+                <input id="email-input" type="email" class="config-input" placeholder="admin@example.com" required>
+            </div>
+            <button id="btn-send-otp" class="w-full py-3 bg-cyan-600 hover:bg-cyan-500 text-white font-semibold rounded-lg transition-all shadow-md shadow-cyan-600/20 hover:shadow-cyan-500/30 active:scale-95 flex justify-center items-center gap-2">
+                Send OTP
+            </button>
+        </div>
+
+        <!-- Step 2: OTP Form -->
+        <div id="step-otp" class="hidden">
+            <div class="text-left mb-4">
+                <label class="block text-xs text-slate-400 mb-1.5 font-medium uppercase tracking-wider">6-Digit OTP</label>
+                <input id="otp-input" type="text" class="config-input text-center text-2xl tracking-widest font-mono" placeholder="------" maxlength="6" required>
+            </div>
+            <button id="btn-verify-otp" class="w-full py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold rounded-lg transition-all shadow-md active:scale-95 flex justify-center items-center gap-2 mb-3">
+                Verify & Login
+            </button>
+            <button id="btn-back" class="text-sm text-slate-400 hover:text-cyan-400 transition-colors">
+                &larr; Use a different email
+            </button>
+        </div>
+        
+        <!-- Error Message Container -->
+        <div id="error-msg" class="mt-4 text-sm text-red-400 hidden"></div>
+        <div id="success-msg" class="mt-4 text-sm text-emerald-400 hidden"></div>
+    </div>
+
+    <script>
+        const stepEmail = document.getElementById('step-email');
+        const stepOtp = document.getElementById('step-otp');
+        const btnSendOtp = document.getElementById('btn-send-otp');
+        const btnVerifyOtp = document.getElementById('btn-verify-otp');
+        const btnBack = document.getElementById('btn-back');
+        const emailInput = document.getElementById('email-input');
+        const otpInput = document.getElementById('otp-input');
+        const errorMsg = document.getElementById('error-msg');
+        const successMsg = document.getElementById('success-msg');
+        const statusText = document.getElementById('status-text');
+
+        let currentEmail = "";
+
+        function showError(msg) {
+            errorMsg.textContent = msg;
+            errorMsg.classList.remove('hidden');
+            successMsg.classList.add('hidden');
+        }
+
+        function showSuccess(msg) {
+            successMsg.textContent = msg;
+            successMsg.classList.remove('hidden');
+            errorMsg.classList.add('hidden');
+        }
+
+        btnSendOtp.addEventListener('click', async () => {
+            const email = emailInput.value.trim();
+            if (!email) return showError("Please enter a valid email.");
+            
+            btnSendOtp.disabled = true;
+            btnSendOtp.innerHTML = '<span class="animate-spin inline-block w-4 h-4 border-2 border-white/20 border-t-white rounded-full"></span> Sending...';
+            errorMsg.classList.add('hidden');
+
+            try {
+                const res = await fetch('/api/login/send-otp', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email })
+                });
+                const data = await res.json();
+
+                if (res.ok) {
+                    currentEmail = email;
+                    stepEmail.classList.add('hidden');
+                    stepOtp.classList.remove('hidden');
+                    statusText.textContent = `OTP sent to ${email}`;
+                    showSuccess("OTP sent successfully!");
+                } else {
+                    showError(data.error || "Failed to send OTP.");
+                }
+            } catch (err) {
+                showError("Network error. Try again.");
+            } finally {
+                btnSendOtp.disabled = false;
+                btnSendOtp.innerHTML = 'Send OTP';
+            }
+        });
+
+        btnVerifyOtp.addEventListener('click', async () => {
+            const otp = otpInput.value.trim();
+            if (otp.length !== 6) return showError("OTP must be 6 digits.");
+
+            btnVerifyOtp.disabled = true;
+            btnVerifyOtp.innerHTML = '<span class="animate-spin inline-block w-4 h-4 border-2 border-white/20 border-t-white rounded-full"></span> Verifying...';
+            errorMsg.classList.add('hidden');
+
+            try {
+                const res = await fetch('/api/login/verify-otp', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email: currentEmail, otp })
+                });
+                const data = await res.json();
+
+                if (res.ok) {
+                    showSuccess("Login successful! Redirecting...");
+                    setTimeout(() => { window.location.href = '/'; }, 1000);
+                } else {
+                    showError(data.error || "Invalid OTP.");
+                }
+            } catch (err) {
+                showError("Network error. Try again.");
+            } finally {
+                btnVerifyOtp.disabled = false;
+                btnVerifyOtp.innerHTML = 'Verify & Login';
+            }
+        });
+
+        btnBack.addEventListener('click', () => {
+            stepOtp.classList.add('hidden');
+            stepEmail.classList.remove('hidden');
+            statusText.textContent = "Enter your email to receive a one-time password.";
+            errorMsg.classList.add('hidden');
+            successMsg.classList.add('hidden');
+            otpInput.value = '';
+        });
+    </script>
+</body>
+</html>
