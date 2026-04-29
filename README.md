@@ -15,15 +15,17 @@ A **real-time cybersecurity dashboard** built with Python Flask that monitors ru
   - 🔴 **High CPU** — Processes exceeding configurable CPU threshold (default: 70%)
   - 🔴 **High RAM** — Processes exceeding configurable memory threshold (default: 500 MB)
   - 🟠 **Unknown/Suspicious** — Processes not found in the comprehensive whitelist
+- **Advanced Email Alert System** — Background monitor with 7 behavioral triggers, SMTP-based notifications, intelligent cooldown management to prevent alert fatigue, and scheduled daily digests
+- **OTP Secure Login** — Protects the dashboard with a robust One-Time Password (OTP) authentication system sent securely via email
 - **Real-Time Dashboard** — Auto-refreshing every 5 seconds via AJAX polling (no page reloads)
 - **System Resource Gauges** — Live CPU and RAM usage gauges with color-coded indicators
 - **Searchable & Sortable Table** — Filter processes by name/PID/path and sort any column
-- **Configurable Thresholds** — Adjust CPU% and RAM limits via UI sliders (updates backend in real-time)
-- **SQLite Event Logging** — All flagged events are automatically persisted to a local database
+- **Configurable Thresholds** — Adjust CPU/RAM limits and Email configurations via UI sliders and panels (updates backend in real-time)
+- **SQLite Event Logging** — All flagged events and email alerts are automatically persisted to a local database
 - **CSV Export** — Download complete flagged process history as a CSV report
 - **Comprehensive Whitelist** — 250+ known safe process names across Windows, Linux, and macOS
 - **Dark Cybersecurity Theme** — Sleek dark navy UI with cyan accents and glassmorphism design
-- **Fully Offline** — Runs 100% on localhost with no external API dependencies
+- **Fully Offline Capable** — Runs 100% on localhost (email notifications require internet connectivity)
 
 ---
 
@@ -45,6 +47,7 @@ A **real-time cybersecurity dashboard** built with Python Flask that monitors ru
 ### Prerequisites
 - **Python 3.10+** installed on your system
 - A modern web browser (Chrome, Firefox, Edge)
+- SMTP credentials (if email alerts/OTP are required)
 
 ### Steps
 
@@ -71,23 +74,28 @@ python app.py
 
 ### Open the Dashboard
 
-Navigate to **[http://localhost:5000](http://localhost:5000)** in your browser.
+Navigate to **[http://localhost:5000](http://localhost:5000)** in your browser. You will be prompted to log in using OTP authentication.
 
 ---
 
 ## 📁 Project Structure
 
-```
+```text
 suspicious-process-monitor/
 │
 ├── app.py                  # Main Flask application & API endpoints
-├── monitor.py              # psutil process scanning & flagging engine
+├── monitor.py              # psutil process scanning & accurate CPU aggregation
+├── alert_engine.py         # 7-trigger behavioral detection engine
+├── alert_monitor.py        # Background thread for alert evaluation
+├── email_service.py        # SMTP integration for alerts and OTP
 ├── database.py             # SQLite setup, queries, and log management
 ├── whitelist.py            # Known safe process names (250+ entries)
-├── config.py               # Thresholds, paths, and settings
+├── config.py               # Thresholds, paths, email credentials, and settings
+├── cooldown.py             # Alert cooldown and fatigue management
 │
 ├── templates/
-│   └── index.html          # Dashboard HTML (Tailwind CSS)
+│   ├── index.html          # Dashboard HTML (Tailwind CSS)
+│   └── login.html          # OTP Login HTML
 │
 ├── static/
 │   ├── css/
@@ -108,27 +116,36 @@ suspicious-process-monitor/
 
 ## 🔌 API Endpoints
 
-| Method | Endpoint          | Description                              |
-|:-------|:------------------|:-----------------------------------------|
-| GET    | `/`               | Serve the dashboard HTML page            |
-| GET    | `/api/processes`  | JSON array of all running processes      |
-| GET    | `/api/flagged`    | JSON array of last 20 flagged events     |
-| GET    | `/api/system`     | System-wide CPU and RAM statistics       |
-| GET    | `/api/export/csv` | Download flagged log as CSV file         |
-| POST   | `/api/config`     | Update CPU/RAM thresholds at runtime     |
+| Method | Endpoint                    | Description                              |
+|:-------|:----------------------------|:-----------------------------------------|
+| GET    | `/`                         | Serve the dashboard HTML page            |
+| GET    | `/login`                    | Serve the OTP login HTML page            |
+| POST   | `/api/login/send-otp`       | Generate and send an OTP via email       |
+| POST   | `/api/login/verify-otp`     | Verify submitted OTP to establish session|
+| GET    | `/api/processes`            | JSON array of all running processes      |
+| GET    | `/api/flagged`              | JSON array of last 20 flagged events     |
+| GET    | `/api/system`               | System-wide CPU and RAM statistics       |
+| GET    | `/api/export/csv`           | Download flagged log as CSV file         |
+| POST   | `/api/config`               | Update CPU/RAM thresholds at runtime     |
+| GET    | `/api/alerts`               | JSON array of recent email alerts        |
+| GET    | `/api/alerts/stats`         | Alert severity counts & system status    |
+| POST   | `/api/alerts/config`        | Update email/alert settings at runtime   |
+| POST   | `/api/alerts/test`          | Send a test email                        |
 
 ---
 
 ## ⚙️ Configuration
 
-Default thresholds are defined in `config.py` and can be adjusted via the dashboard UI:
+Default thresholds and credentials are defined in `config.py` and can be adjusted via the dashboard UI:
 
-| Setting          | Default | Description                    |
-|:-----------------|:--------|:-------------------------------|
-| CPU_THRESHOLD    | 70%     | Flag processes above this CPU% |
-| MEM_THRESHOLD_MB | 500 MB  | Flag processes above this RAM  |
-| POLL_INTERVAL_MS | 5000 ms | Dashboard refresh interval     |
-| DEBUG_MODE       | True    | Flask debug mode               |
+| Setting                 | Description                                      |
+|:------------------------|:-------------------------------------------------|
+| CPU_THRESHOLD           | Flag processes above this CPU%                   |
+| MEM_THRESHOLD_MB        | Flag processes above this RAM                    |
+| POLL_INTERVAL_MS        | Dashboard refresh interval                       |
+| EMAIL_ALERTS_ENABLED    | Enable/disable the background alert monitor      |
+| SMTP_SERVER / PORT      | SMTP configuration for OTP and Alerts            |
+| EMAIL_SENDER            | Source email address (hardcoded for security)    |
 
 ---
 
